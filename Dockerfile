@@ -1,10 +1,11 @@
-FROM gliderlabs/alpine:3.4
+FROM gliderlabs/alpine:latest
 
 RUN \
   apk-install \
     curl \
     openssh-client \
     python \
+    python-dev \
     py-boto \
     py-dateutil \
     py-httplib2 \
@@ -14,32 +15,25 @@ RUN \
     py-setuptools \
     py-yaml \
     openssh-client \
+    gcc \
+    linux-headers \
+    musl-dev \
+    libffi \
+    libffi-dev \
+    openssl \
+    openssl-dev \
+    make \
     tar && \
   pip install --upgrade pip python-keyczar && \
-  rm -rf /var/cache/apk/*
-
-RUN apk add --update bash
-
-RUN mkdir /etc/ansible/ /ansible
-
-RUN echo "[local]" >> /etc/ansible/hosts && \
-    echo "localhost" >> /etc/ansible/hosts
+  pip install --upgrade boto boto3 && \
+  apk add --update bash
 
 RUN \
-  curl -fsSL https://releases.ansible.com/ansible/ansible-2.2.2.0.tar.gz -o ansible.tar.gz && \
-  tar -xzf ansible.tar.gz -C ansible --strip-components 1 && \
-  rm -fr ansible.tar.gz /ansible/docs /ansible/examples /ansible/packaging
-
-RUN mkdir -p /ansible/playbooks
-
-WORKDIR /ansible/playbooks
+  pip install ansible && \
+  apk del linux-headers gcc python-dev musl-dev libffi-dev openssl-dev make && \
+  rm -rf /var/cache/apk/*
 
 ENV ANSIBLE_GATHERING smart
 ENV ANSIBLE_HOST_KEY_CHECKING false
 ENV ANSIBLE_RETRY_FILES_ENABLED false
-ENV ANSIBLE_ROLES_PATH /ansible/playbooks/roles
 ENV ANSIBLE_SSH_PIPELINING True
-ENV PATH /ansible/bin:$PATH
-ENV PYTHONPATH /ansible/lib
-
-COPY Key.pem /root/
